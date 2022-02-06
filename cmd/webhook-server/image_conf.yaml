@@ -1,0 +1,9 @@
+default: localhost:5000
+allow:
+  # values: true / false / mutate
+  empty: false 
+  # If "allow.empty: mutate", default is added as a mutation to pod
+  registries:
+    - rega
+    - regb
+    - localhost:5000

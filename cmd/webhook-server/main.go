@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
-	"strings"
 
 	admission "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -21,6 +20,7 @@ const (
 
 var (
 	podResource = metav1.GroupVersionResource{Version: "v1", Resource: "pods"}
+	conf, _     = readConf("image_conf.yaml")
 )
 
 func applyRegistryDefaults(req *admission.AdmissionRequest) ([]patchOperation, error) {
@@ -49,10 +49,15 @@ func applyRegistryDefaults(req *admission.AdmissionRequest) ([]patchOperation, e
 		}
 	}
 
-	//Assume for now that all images need contain localhost:5000, else error
 	var errorContainers = make([]containerDetail, 0)
+
+	//TODO: remove when all options for conf.Allow.Empty is implemented.
+	if conf.Allow.Empty == "mutate" || conf.Allow.Empty == "true" {
+		return nil, fmt.Errorf("configuration is not implemented yet: %v", conf.Allow.Empty)
+	}
+
 	for _, s := range allContainers {
-		if !strings.Contains(s.image, "localhost:5000") {
+		if !containerImageISOK(s.image, conf) {
 			errorContainers = append(errorContainers, s)
 		}
 	}
@@ -63,6 +68,7 @@ func applyRegistryDefaults(req *admission.AdmissionRequest) ([]patchOperation, e
 		log.Println(errorMessage)
 	}
 
+	//TODO: Implement conf.Allow.Empty='mutate' here.
 	var patches []patchOperation
 	/*
 		patches = append(patches, patchOperation{
@@ -80,6 +86,12 @@ func applyRegistryDefaults(req *admission.AdmissionRequest) ([]patchOperation, e
 }
 
 func main() {
+	c, err := readConf("image_conf.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%v", c)
+
 	certPath := filepath.Join(tlsDir, tlsCertFile)
 	keyPath := filepath.Join(tlsDir, tlsKeyFile)
 

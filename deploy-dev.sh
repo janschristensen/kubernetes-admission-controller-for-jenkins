@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 kubectl delete namespace webhook-for-jenkins
 kubectl delete MutatingWebhookConfiguration mutating-webhook-for-jenkins
-bash -c 'export GOOS="linux" && cd cmd\\webhook-server && go build && echo succes'
+bash -c 'export GOOS="linux" && echo go build ... && cd cmd\\webhook-server && go build && echo go build succes'
 IMAGE=localhost:5000/dk-bankdata-web/admission-controller-webhook-for-jenkins:latest
 docker build . -t $IMAGE -f ./image/Dockerfile
 docker push $IMAGE
